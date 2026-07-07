@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A static, client-side-only browser game: draw a math formula (explicit `y=f(x)` or implicit `F(x,y)=0`), then drop a ball that falls under gravity and rolls along whichever curve it lands on. The ball never bounces but keeps its momentum (inertia); a stage is cleared once the ball has visited every waypoint defined for that stage. The full spec is in `tmp/input01.md` (Japanese) and the original implementation plan is in `.claude/plans/` if present.
+GraphCoaster is a static, client-side-only browser game: draw a math formula (explicit `y=f(x)` or implicit `F(x,y)=0`), then drop a ball that falls under gravity and rolls along whichever curve it lands on. The ball never bounces but keeps its momentum (inertia); a stage is cleared once the ball has visited every waypoint defined for that stage. The full spec is in `tmp/input01.md` (Japanese) and the original implementation plan is in `.claude/plans/` if present.
 
 Required stack (do not substitute): Svelte 5 using runes (not the Svelte 4 store-only style), Vite 7, Tailwind CSS 4 (CSS-first config, no `tailwind.config.js`), Flowbite Svelte for UI components, MIT license, podman for containerized builds, deployed to GitHub Pages via GitHub Actions.
 
@@ -17,8 +17,8 @@ Required stack (do not substitute): Svelte 5 using runes (not the Svelte 4 store
 
 ### Podman
 
-- Local preview server: `podman build -t graphball-preview . && podman run --rm -p 8080:80 graphball-preview` then open `http://localhost:8080`.
-- Extract the static build without running a server: `podman build --target build -t graphball-build . && podman create --name gb-extract graphball-build && podman cp gb-extract:/app/dist ./dist && podman rm gb-extract`.
+- Local preview server: `podman build -t graphcoaster-preview . && podman run --rm -p 8080:80 graphcoaster-preview` then open `http://localhost:8080`.
+- Extract the static build without running a server: `podman build --target build -t graphcoaster-build . && podman create --name gb-extract graphcoaster-build && podman cp gb-extract:/app/dist ./dist && podman rm gb-extract`.
 
 ### Deployment
 

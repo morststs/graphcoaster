@@ -1,6 +1,6 @@
 ---
 name: run
-description: Launch this project's ball-rolling graph game (Svelte 5 + Vite 7) for local viewing — dev server or a podman-built static preview. Use whenever asked to run, start, preview, or screenshot this app.
+description: Launch GraphCoaster, this project's ball-rolling graph game (Svelte 5 + Vite 7), for local viewing — dev server or a podman-built static preview. Use whenever asked to run, start, preview, or screenshot this app.
 ---
 
 # Run
@@ -30,8 +30,8 @@ Confirms the app works from the actual `dist/` bundle (catches build-only issues
 Use this specifically to confirm the container image that ships to GitHub Pages' build step behaves the same as local dev — closest to how CI actually builds it.
 
 ```bash
-podman build -t graphball-preview .
-podman run --rm -p 8080:80 graphball-preview
+podman build -t graphcoaster-preview .
+podman run --rm -p 8080:80 graphcoaster-preview
 ```
 
 Open `http://localhost:8080`. Stop with Ctrl-C (the `--rm` flag removes the container on exit).

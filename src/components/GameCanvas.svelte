@@ -3,7 +3,7 @@
   import { game, getCurrentStage, getActiveCurves } from '../lib/gameState.svelte';
   import { advance } from '../lib/gameLoop';
   import { toPixel, MATH_MIN, MATH_MAX } from '../lib/coords';
-  import { BALL_RADIUS } from '../lib/physics';
+  import { BALL_RADIUS, ballDisplayPosition } from '../lib/physics';
 
   let canvasEl: HTMLCanvasElement;
   let rafId = 0;
@@ -83,7 +83,8 @@
       ctx.stroke();
     }
 
-    const ballPx = toPixel(game.ball.x, game.ball.y, w, h);
+    const ballPos = ballDisplayPosition(game.ball, getActiveCurves());
+    const ballPx = toPixel(ballPos.x, ballPos.y, w, h);
     const radiusPx = (BALL_RADIUS / (MATH_MAX - MATH_MIN)) * w;
     ctx.fillStyle = '#f1f5f9';
     ctx.beginPath();

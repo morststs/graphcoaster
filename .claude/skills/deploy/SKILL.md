@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Build and publish this project's static site to GitHub Pages, or produce a standalone dist/ artifact via podman. Use when asked to deploy, publish, ship, or release this app.
+description: Build and publish GraphCoaster's static site to GitHub Pages, or produce a standalone dist/ artifact via podman. Use when asked to deploy, publish, ship, or release this app.
 ---
 
 # Deploy
@@ -18,8 +18,8 @@ One-time repo setup this workflow depends on (verify if deploys start failing wi
 Useful for handing off `dist/` without pushing to `main`, e.g. to test the exact CI build output locally:
 
 ```bash
-podman build --target build -t graphball-build .
-podman create --name gb-extract graphball-build
+podman build --target build -t graphcoaster-build .
+podman create --name gb-extract graphcoaster-build
 podman cp gb-extract:/app/dist ./dist
 podman rm gb-extract
 ```

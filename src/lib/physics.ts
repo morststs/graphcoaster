@@ -5,6 +5,7 @@ export const BALL_RADIUS = 0.25;
 export const WAYPOINT_RADIUS = 0.5;
 export const OUT_OF_BOUNDS = 10.5;
 export const FIXED_DT = 1 / 120;
+export const ROLLING_FRICTION = 0.2;
 
 const IMPLICIT_EPS = 1e-6;
 const GRAD_H = 1e-3;
@@ -32,6 +33,26 @@ function gradientAt(curve: Extract<Curve, { kind: 'implicit' }>, x: number, y: n
   return { fx, fy };
 }
 
+/** Approximate perpendicular distance from (x,y) to a curve, used to check for a ball/line overlap before dropping. */
+function distanceToCurve(curve: Curve, x: number, y: number): number {
+  if (curve.kind === 'explicit') {
+    const fy = curve.yAt(x);
+    if (!Number.isFinite(fy)) return Infinity;
+    const slope = curve.slopeAt(x);
+    return Math.abs(y - fy) / Math.hypot(1, slope);
+  }
+  const fval = curve.F(x, y);
+  if (!Number.isFinite(fval)) return Infinity;
+  const g = gradientAt(curve, x, y);
+  const glen = Math.hypot(g.fx, g.fy) || 1;
+  return Math.abs(fval) / glen;
+}
+
+/** Whether a ball centered at (x,y) already overlaps any of the given curves, accounting for its thickness. */
+export function ballIntersectsCurves(x: number, y: number, curves: Curve[]): boolean {
+  return curves.some((curve) => distanceToCurve(curve, x, y) <= BALL_RADIUS);
+}
+
 function tangentFor(curve: Curve, x: number, y: number, preferVx: number, preferVy: number) {
   if (curve.kind === 'explicit') {
     const slope = curve.slopeAt(x);
@@ -45,6 +66,34 @@ function tangentFor(curve: Curve, x: number, y: number, preferVx: number, prefer
   let t = { x: -g.fy / glen, y: g.fx / glen };
   if (t.x * preferVx + t.y * preferVy < 0) t = { x: -t.x, y: -t.y };
   return t;
+}
+
+function outwardNormalFor(curve: Curve, x: number, y: number, outsideSign: number) {
+  if (curve.kind === 'explicit') {
+    const slope = curve.slopeAt(x);
+    const len = Math.hypot(1, slope);
+    return { x: -slope / len, y: 1 / len };
+  }
+  const g = gradientAt(curve, x, y);
+  const glen = Math.hypot(g.fx, g.fy) || 1;
+  const sign = outsideSign || 1;
+  return { x: (sign * g.fx) / glen, y: (sign * g.fy) / glen };
+}
+
+/** Where the ball should be drawn: offset from the curve by BALL_RADIUS along the outward normal, so it visually rests on top of the line instead of being centered on it. */
+export function ballDisplayPosition(ball: BallState, curves: Curve[]) {
+  if (ball.mode !== 'rolling') return { x: ball.x, y: ball.y };
+  const curve = curves.find((c) => c.id === ball.curveId);
+  if (!curve) return { x: ball.x, y: ball.y };
+  const n = outwardNormalFor(curve, ball.x, ball.y, ball.outsideSign);
+  return { x: ball.x + BALL_RADIUS * n.x, y: ball.y + BALL_RADIUS * n.y };
+}
+
+/** Coulomb-style kinetic friction: constant deceleration opposing motion, clamped so it can't reverse direction. */
+function applyFriction(vt: number, dt: number): number {
+  const decel = ROLLING_FRICTION * dt;
+  if (Math.abs(vt) <= decel) return 0;
+  return vt - Math.sign(vt) * decel;
 }
 
 function findFirstCrossing(curves: Curve[], x0: number, y0: number, x1: number, y1: number): Impact | null {
@@ -139,7 +188,7 @@ function stepRolling(ball: BallState, curves: Curve[], dt: number) {
       return;
     }
     const t = tangentFor(curve, nx, surfaceY, vx, vy);
-    const vt = vx * t.x + vy * t.y;
+    const vt = applyFriction(vx * t.x + vy * t.y, dt);
     ball.x = nx;
     ball.y = surfaceY;
     ball.vx = t.x * vt;
@@ -169,7 +218,7 @@ function stepRolling(ball: BallState, curves: Curve[], dt: number) {
     py -= (fv * g.fy) / glen2;
   }
   const t = tangentFor(curve, px, py, vx, vy);
-  const vt = vx * t.x + vy * t.y;
+  const vt = applyFriction(vx * t.x + vy * t.y, dt);
   ball.x = px;
   ball.y = py;
   ball.vx = t.x * vt;

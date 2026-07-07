@@ -1,6 +1,7 @@
 import { STAGES, type Stage } from './stages';
 import { parseFormula, FormulaError } from './formulaParser';
 import { buildCurve, type Curve } from './curves';
+import { ballIntersectsCurves } from './physics';
 
 export interface FormulaSlot {
   id: string;
@@ -27,7 +28,6 @@ export interface BallState {
 }
 
 const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4'];
-const MAX_FORMULAS = 6;
 
 let slotCounter = 0;
 
@@ -60,7 +60,7 @@ export function getActiveCurves(): Curve[] {
 }
 
 export function addFormula() {
-  if (game.formulas.length >= MAX_FORMULAS) return;
+  if (game.formulas.length >= getCurrentStage().maxFormulas) return;
   game.formulas.push(makeFormulaSlot(game.formulas.length));
 }
 
@@ -88,8 +88,13 @@ export function updateFormulaText(id: string, text: string) {
   }
 }
 
+/** False while the ball's drop position already overlaps an active curve — dropping from inside a line isn't a meaningful fall. */
+export function canDrop(): boolean {
+  return game.ball.mode === 'idle' && !ballIntersectsCurves(game.ball.x, game.ball.y, getActiveCurves());
+}
+
 export function dropBall() {
-  if (game.ball.mode !== 'idle') return;
+  if (!canDrop()) return;
   game.ball.mode = 'falling';
 }
 
@@ -100,11 +105,21 @@ export function resetBall() {
   game.cleared = false;
 }
 
-export function nextStage() {
-  game.stageIndex = (game.stageIndex + 1) % STAGES.length;
+/** Returns the ball to the drop point without touching waypoints/cleared — used when the ball exits bounds after already clearing the stage, so the clear stands. */
+export function returnBallToDrop() {
+  game.ball = makeBallAtDrop(getCurrentStage());
+}
+
+export function selectStage(index: number) {
+  if (index < 0 || index >= STAGES.length) return;
+  game.stageIndex = index;
   const stage = getCurrentStage();
   game.formulas = [makeFormulaSlot(0)];
   game.ball = makeBallAtDrop(stage);
   game.waypoints = makeWaypoints(stage);
   game.cleared = false;
+}
+
+export function nextStage() {
+  selectStage((game.stageIndex + 1) % STAGES.length);
 }

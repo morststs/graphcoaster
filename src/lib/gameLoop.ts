@@ -1,4 +1,4 @@
-import { game, getCurrentStage, getActiveCurves } from './gameState.svelte';
+import { game, getActiveCurves, resetBall, returnBallToDrop } from './gameState.svelte';
 import { stepBall, FIXED_DT, WAYPOINT_RADIUS } from './physics';
 
 let accumulator = 0;
@@ -15,21 +15,18 @@ function checkWaypoints() {
   }
 }
 
-function resetToDrop() {
-  const stage = getCurrentStage();
-  game.ball.x = stage.drop.x;
-  game.ball.y = stage.drop.y;
-  game.ball.vx = 0;
-  game.ball.vy = 0;
-  game.ball.mode = 'idle';
-  game.ball.curveId = null;
-}
-
 function substep() {
   if (game.ball.mode !== 'falling' && game.ball.mode !== 'rolling') return;
   const outOfBounds = stepBall(game.ball, getActiveCurves(), FIXED_DT);
   if (outOfBounds) {
-    resetToDrop();
+    if (game.cleared) {
+      // Stage is already cleared; just send the ball back without undoing the clear.
+      returnBallToDrop();
+    } else {
+      // A failed drop forfeits any waypoints visited so far: clearing a stage
+      // requires visiting every waypoint within a single drop attempt.
+      resetBall();
+    }
     return;
   }
   checkWaypoints();

@@ -1,4 +1,4 @@
-# グラフを描いて玉を転がすゲーム
+# GraphCoaster
 
 数式（陽関数 `y=f(x)` / 陰関数 `F(x,y)=0`）を入力して図形を描き、球を落として全ての通過点を通過させるブラウザゲームです。静的コンテンツのみで動作します。
 
@@ -23,16 +23,16 @@ npm run check
 ローカルプレビューサーバーを起動:
 
 ```bash
-podman build -t graphball-preview .
-podman run --rm -p 8080:80 graphball-preview
+podman build -t graphcoaster-preview .
+podman run --rm -p 8080:80 graphcoaster-preview
 # http://localhost:8080
 ```
 
 `dist/` だけを取り出す場合:
 
 ```bash
-podman build --target build -t graphball-build .
-podman create --name gb-extract graphball-build
+podman build --target build -t graphcoaster-build .
+podman create --name gb-extract graphcoaster-build
 podman cp gb-extract:/app/dist ./dist
 podman rm gb-extract
 ```
