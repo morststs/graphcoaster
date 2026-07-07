@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@source "../node_modules/flowbite-svelte";
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+}
