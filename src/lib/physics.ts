@@ -80,12 +80,34 @@ function outwardNormalFor(curve: Curve, x: number, y: number, outsideSign: numbe
   return { x: (sign * g.fx) / glen, y: (sign * g.fy) / glen };
 }
 
+function sideOf(curve: Curve, x: number, y: number): number {
+  if (curve.kind === 'explicit') {
+    return Math.sign(y - curve.yAt(x)) || 1;
+  }
+  return Math.sign(curve.F(x, y)) || 1;
+}
+
 /** Where the ball should be drawn: offset from the curve by BALL_RADIUS along the outward normal, so it visually rests on top of the line instead of being centered on it. */
 export function ballDisplayPosition(ball: BallState, curves: Curve[]) {
-  if (ball.mode !== 'rolling') return { x: ball.x, y: ball.y };
-  const curve = curves.find((c) => c.id === ball.curveId);
-  if (!curve) return { x: ball.x, y: ball.y };
-  const n = outwardNormalFor(curve, ball.x, ball.y, ball.outsideSign);
+  if (ball.mode === 'rolling') {
+    const curve = curves.find((c) => c.id === ball.curveId);
+    if (curve) {
+      const n = outwardNormalFor(curve, ball.x, ball.y, ball.outsideSign);
+      return { x: ball.x + BALL_RADIUS * n.x, y: ball.y + BALL_RADIUS * n.y };
+    }
+  }
+  // Not rolling (e.g. mid-bounce off a curve it just grazed): still push the ball
+  // off any curve it's currently overlapping so it never visually clips through.
+  let nearest: { curve: Curve; dist: number } | null = null;
+  for (const curve of curves) {
+    const dist = distanceToCurve(curve, ball.x, ball.y);
+    if (dist < BALL_RADIUS && (nearest === null || dist < nearest.dist)) {
+      nearest = { curve, dist };
+    }
+  }
+  if (!nearest) return { x: ball.x, y: ball.y };
+  const side = sideOf(nearest.curve, ball.x, ball.y);
+  const n = outwardNormalFor(nearest.curve, ball.x, ball.y, side);
   return { x: ball.x + BALL_RADIUS * n.x, y: ball.y + BALL_RADIUS * n.y };
 }
 
