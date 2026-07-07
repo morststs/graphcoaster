@@ -103,7 +103,7 @@ function findFirstCrossing(curves: Curve[], x0: number, y0: number, x1: number, 
     if (curve.kind === 'explicit') {
       const d0 = y0 - curve.yAt(x0);
       const d1 = y1 - curve.yAt(x1);
-      if (Number.isFinite(d0) && Number.isFinite(d1) && d0 >= 0 && d1 < 0) {
+      if (Number.isFinite(d0) && Number.isFinite(d1) && Math.sign(d0) !== Math.sign(d1)) {
         t = d0 / (d0 - d1);
       }
     } else {

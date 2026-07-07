@@ -22,7 +22,7 @@ Required stack (do not substitute): Svelte 5 using runes (not the Svelte 4 store
 
 ### Deployment
 
-GitHub Pages is served from the `dist/` output of `npm run build`, deployed automatically by `.github/workflows/deploy.yml` on push to `main`. The Vite `base` path is controlled by the `GH_PAGES_BASE` env var (empty/`/` for local and podman preview, `/<repo-name>/` when set by CI) — keep this indirection when touching `vite.config.ts` so local previews don't break.
+GitHub Pages is served from the `dist/` output of `npm run build`, deployed automatically by `.github/workflows/deploy.yml` on push to `main`. The site is served from the custom domain `graphcoaster.e17.click` (configured via `public/CNAME`, which Vite copies into `dist/`), and GitHub Pages serves custom domains from the root, so the Vite `base` stays `/` everywhere — local, podman preview, and the deployed site. The `GH_PAGES_BASE` env var still exists as an override for `vite.config.ts` (e.g. if the custom domain is ever removed and the site reverts to the `/<repo-name>/` GitHub Pages project-page path), but CI no longer sets it.
 
 ## Architecture
 
