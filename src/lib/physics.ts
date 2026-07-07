@@ -69,14 +69,14 @@ function tangentFor(curve: Curve, x: number, y: number, preferVx: number, prefer
 }
 
 function outwardNormalFor(curve: Curve, x: number, y: number, outsideSign: number) {
+  const sign = outsideSign || 1;
   if (curve.kind === 'explicit') {
     const slope = curve.slopeAt(x);
     const len = Math.hypot(1, slope);
-    return { x: -slope / len, y: 1 / len };
+    return { x: (-slope / len) * sign, y: (1 / len) * sign };
   }
   const g = gradientAt(curve, x, y);
   const glen = Math.hypot(g.fx, g.fy) || 1;
-  const sign = outsideSign || 1;
   return { x: (sign * g.fx) / glen, y: (sign * g.fy) / glen };
 }
 
@@ -131,6 +131,9 @@ function land(ball: BallState, curve: Curve, x: number, y: number, vx: number, v
   ball.curveId = curve.id;
   if (curve.kind === 'implicit') {
     ball.outsideSign = Math.sign(curve.F(prevX, prevY)) || 1;
+  } else {
+    // +1 when falling onto the curve from above (the usual case), -1 when launched up into its underside.
+    ball.outsideSign = Math.sign(prevY - curve.yAt(prevX)) || 1;
   }
 }
 
@@ -177,9 +180,12 @@ function stepRolling(ball: BallState, curves: Curve[], dt: number) {
 
   if (curve.kind === 'explicit') {
     const surfaceY = curve.yAt(nx);
-    if (!Number.isFinite(surfaceY) || ny > surfaceY) {
-      // Tentative free-flight position ended up above the surface: the curve
-      // curved away faster than gravity could follow, so the ball departs.
+    const side = ball.outsideSign || 1;
+    const departed = side >= 0 ? ny > surfaceY : ny < surfaceY;
+    if (!Number.isFinite(surfaceY) || departed) {
+      // Tentative free-flight position ended up past the surface on the side the
+      // ball approached from: the curve curved away faster than gravity could
+      // follow (or, hugging the underside, gravity pulled it off), so it departs.
       ball.mode = 'falling';
       ball.x = nx;
       ball.y = ny;
